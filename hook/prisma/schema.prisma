@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+
+  zaps     Zap[]
+}
+
+model Zap {
+  id String @id @default(uuid())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  trigger Trigger?
+  actions Action[]
+  zapRuns ZapRun[]
+}
+
+/* =======================
+   TRIGGER (1–1)
+======================= */
+model Trigger {
+  id String @id @default(uuid())
+
+  zapId              String @unique
+  availableTriggerId String
+
+  zap                Zap              @relation(fields: [zapId], references: [id], onDelete: Cascade)
+  availableTrigger   AvailableTrigger @relation(fields: [availableTriggerId], references: [id])
+}
+
+/* =======================
+   AVAILABLE TRIGGER
+======================= */
+model AvailableTrigger {
+  id   String @id @default(uuid())
+  name String
+
+  triggers Trigger[]
+}
+
+/* =======================
+   ACTION (Steps)
+======================= */
+model Action {
+  id String @id @default(uuid())
+
+  zapId             String
+  availableActionId String
+  order             Int
+
+  zap               Zap             @relation(fields: [zapId], references: [id], onDelete: Cascade)
+  availableAction   AvailableAction @relation(fields: [availableActionId], references: [id])
+
+  @@unique([zapId, order])
+}
+
+/* =======================
+   AVAILABLE ACTION
+======================= */
+model AvailableAction {
+  id   String @id @default(uuid())
+  name String
+
+  actions Action[]
+}
+
+/* =======================
+   ZAP RUN (Execution)
+======================= */
+model ZapRun {
+  id        String   @id @default(uuid())
+  zapId     String
+  metadata  Json
+  createdAt DateTime @default(now())
+
+  zap       Zap @relation(fields: [zapId], references: [id], onDelete: Cascade)
+  outbox    ZapRunOutbox?
+}
+
+/* =======================
+   OUTBOX (Reliable processing)
+======================= */
+model ZapRunOutbox {
+  id        String  @id @default(uuid())
+  zapRunId  String  @unique
+  processed Boolean @default(false)
+
+  zapRun ZapRun @relation(fields: [zapRunId], references: [id], onDelete: Cascade)
+}
