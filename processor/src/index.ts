@@ -1,4 +1,17 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({ adapter });
+
 import { Kafka } from "kafkajs";
 
 const kafka = new Kafka({
@@ -7,13 +20,12 @@ const kafka = new Kafka({
 });
 
 const TOPIC_NAME = "zap-events";
-const prisma = new PrismaClient();
 
 async function main() {
   const producer = kafka.producer();
   await producer.connect();
 
-  console.log("✅ Kafka Producer connected");
+  console.log(" Kafka Producer connected");
 
   while (true) {
     const pendingRows = await prisma.zapRunOutbox.findMany({
@@ -29,7 +41,7 @@ async function main() {
     const messages = pendingRows.map((row) => ({
       key: row.zapRunId.toString(),
       value: JSON.stringify({
-        zapRunId: row.zapRunId
+        zapRunId: row.zapRunId,
       }),
     }));
 
