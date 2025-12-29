@@ -2,12 +2,13 @@
 "use client"
 import { LinkButton } from './button/Linkbutton'
 import { useRouter } from 'next/navigation'
+import { PrimaryButton } from './button/PrimaryButton'
 
 const Appbar = () => {
 
   const router = useRouter()
   return (
-    <div className='flex border-b justify-between  text-black'>
+    <div className='flex border-b justify-between  text-black bg-zinc-100'>
 
       <div>
         <div>
@@ -26,9 +27,9 @@ const Appbar = () => {
         }}> Login</LinkButton>
 
 
-        <LinkButton onClick={() => {
+        <PrimaryButton size='lg' onClick={() => {
           router.push("/signup")
-        }}>Sign Up</LinkButton>
+        }}>Sign Up</PrimaryButton>
 
       </div>
 

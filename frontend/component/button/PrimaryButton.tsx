@@ -21,7 +21,7 @@ export const PrimaryButton = ({
     return (
         <button
             onClick={onClick}
-            className={`link-button cursor-pointer ${sizeClasses}`}
+            className={`link-button cursor-pointer bg-amber-700  hover:bg-zinc-400 ${sizeClasses}`}
         >
             {children}
         </button>
