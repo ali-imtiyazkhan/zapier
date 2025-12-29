@@ -1,7 +1,10 @@
+import { useRouter } from "next/navigation";
+
 export default function HeroSection() {
+  const router = useRouter();
   return (
     <section className="min-h-screen bg-[#fffdf8] flex flex-col items-center justify-center text-center px-4 pt-10">
-      
+
       <h1 className="text-4xl md:text-6xl font-bold text-black leading-tight">
         Automate as fast as you can <br /> type
       </h1>
@@ -13,7 +16,7 @@ export default function HeroSection() {
       </p>
 
       <div className="mt-10 flex flex-col sm:flex-row gap-4">
-        <button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 rounded-full transition">
+        <button onClick={() => { router.push("/signup") }} className="bg-orange-500 cursor-pointer hover:bg-orange-600 text-white font-semibold px-8 py-4 rounded-full transition">
           Get started free
         </button>
 
@@ -27,10 +30,10 @@ export default function HeroSection() {
           <span><b>Free forever</b> for core features</span>
         </div>
         <div className="flex items-center gap-2">
-           <span><b>More apps</b> than any other platform</span>
+          <span><b>More apps</b> than any other platform</span>
         </div>
         <div className="flex items-center gap-2">
-           <span>Cutting-edge <b>AI features</b></span>
+          <span>Cutting-edge <b>AI features</b></span>
         </div>
       </div>
 

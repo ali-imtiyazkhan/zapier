@@ -126,7 +126,7 @@ router.get("/:zapId", authMiddleware, async (req, res) => {
                         order: "asc",
                     },
                     include: {
-                        availableAction: true, // ✅ correct relation
+                        availableAction: true,
                     },
                 },
             },
