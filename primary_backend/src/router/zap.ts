@@ -120,5 +120,52 @@ router.get("/zap", authMiddleware, async (req, res) => {
 });
 
 
+router.get("/:zapId", authMiddleware, async (req, res) => {
+    // @ts-ignore
+  const userId = req.userId;
+  const zapId = req.params.zapId;
+
+  try {
+    const zap = await client.zap.findFirst({
+      where: {
+        id: zapId,
+        userId: userId,
+      },
+      include: {
+        trigger: {
+          include: {
+            availableTrigger: true,
+          },
+        },
+        actions: {
+          orderBy: {
+            order: "asc",
+          },
+          include: {
+            availableAction: true,
+          },
+        },
+      },
+    });
+
+    if (!zap) {
+      return res.status(404).json({
+        message: "Zap not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Zap fetched successfully",
+      zap,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Failed to fetch zap",
+    });
+  }
+});
+
+
 
 export const ZapRouter = router
