@@ -83,18 +83,25 @@ router.post("/zapCreate", authMiddleware, async (req, res) => {
 
 router.get("/zap", authMiddleware, async (req, res) => {
     // @ts-ignore
-  const userId = req.userId; // injected by authMiddleware
+  const userId = req.userId;
 
   try {
     const zaps = await client.zap.findMany({
       where: {
-        userId: userId, // ✅ correct field
+        userId,
       },
       include: {
-        trigger: true,
+        trigger: {
+          include: {
+            availableTrigger: true,
+          },
+        },
         actions: {
           orderBy: {
             order: "asc",
+          },
+          include: {
+            availableAction: true,
           },
         },
       },
@@ -111,6 +118,7 @@ router.get("/zap", authMiddleware, async (req, res) => {
     });
   }
 });
+
 
 
 export const ZapRouter = router
