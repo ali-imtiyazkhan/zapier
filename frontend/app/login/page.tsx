@@ -31,7 +31,7 @@ const LoginPage = () => {
 
       console.log("Login success", response.data);
 
-      router.push("/");
+      router.push("/DashBoard");
 
 
     } catch (error: any) {
@@ -63,7 +63,6 @@ const LoginPage = () => {
           </ul>
         </div>
 
-        {/* RIGHT FORM */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-semibold text-black">
             Welcome back
@@ -101,17 +100,6 @@ const LoginPage = () => {
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder:text-zinc-400"
                 required
               />
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" className="accent-orange-500" />
-                Remember me
-              </label>
-
-              <a href="#" className="text-orange-500 hover:underline">
-                Forgot password?
-              </a>
             </div>
 
             <button

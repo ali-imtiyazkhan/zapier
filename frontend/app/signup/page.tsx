@@ -38,7 +38,7 @@ const Page = () => {
 
       console.log("Signup success:", response.data);
 
-      router.push("/")
+      router.push("/DashBoard")
 
 
     } catch (error: any) {
@@ -137,6 +137,11 @@ const Page = () => {
               By signing up, you agree to Zapier’s Terms and Privacy Policy.
             </p>
 
+            <button
+              onClick={() => router.push("/login")}
+              className=" border border-zinc-300 text-orange-500 hover:underline px-6 py-3  rounded-full  bg-white  hover:bg-zinc-200 cursor-pointer  hover:border-zinc-400 transition duration-200"   >
+              Account already exists? Log in
+            </button>
           </form>
         </div>
 
