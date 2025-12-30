@@ -25,7 +25,15 @@ const client = new PrismaClient({
 
 router.get("/available", async (req, res) => {
   try {
-    const availableActions = await client.availableAction.findMany();
+    const availableActions = await client.availableAction.findMany(
+      {
+        select: {
+    id: true,
+    name: true,
+    image: true,
+  },
+      }
+    );
 
     res.status(200).json({
       message: "All actions retrieved successfully",
