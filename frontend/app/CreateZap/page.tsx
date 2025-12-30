@@ -7,6 +7,7 @@ import ZapNode, { Item } from "@/component/ZapNode";
 import Connector from "@/component/Connector";
 import ZapHeader from "@/component/ZapHeader";
 
+
 type Step = {
   id: number;
   type: "trigger" | "action";
@@ -14,17 +15,16 @@ type Step = {
 };
 
 export default function ZapPage() {
+
   const [steps, setSteps] = useState<Step[]>([
     { id: 1, type: "trigger", text: "Select the event that starts your Zap" },
   ]);
 
   const [history, setHistory] = useState<Step[][]>([]);
 
-  // 🔑 SOURCE OF TRUTH
   const [selectedTrigger, setSelectedTrigger] = useState<Item | null>(null);
   const [selectedActions, setSelectedActions] = useState<Item[]>([]);
 
-  /* ---------------- ADD ACTION ---------------- */
   const addAction = () => {
     setHistory((h) => [...h, steps]);
     setSteps((s) => [
@@ -37,14 +37,12 @@ export default function ZapPage() {
     ]);
   };
 
-  /* ---------------- UNDO ---------------- */
   const handleUndo = () => {
     if (!history.length) return;
     setSteps(history[history.length - 1]);
     setHistory((h) => h.slice(0, -1));
   };
 
-  /* ---------------- SELECT TRIGGER / ACTION ---------------- */
   const handleSelect = (type: "trigger" | "action", item: Item) => {
     if (type === "trigger") {
       setSelectedTrigger(item);
@@ -53,7 +51,6 @@ export default function ZapPage() {
     }
   };
 
-  /* ---------------- PUBLISH ---------------- */
   const handlePublish = async () => {
     if (!selectedTrigger) {
       alert("Please select a trigger");
@@ -65,7 +62,6 @@ export default function ZapPage() {
       return;
     }
 
-    // ✅ PAYLOAD THAT MATCHES BACKEND
     const payload = {
       availableTriggerId: selectedTrigger.id,
       action: selectedActions.map((action) => ({
@@ -84,6 +80,8 @@ export default function ZapPage() {
         },
       }
     );
+
+
   };
 
   return (

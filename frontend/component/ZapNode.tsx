@@ -98,12 +98,12 @@ export default function ZapNode({
                 className="w-full h-full object-contain"
               />
             ) : (
-              <span className="text-xs text-zinc-500">N/A</span>
+              <span className="text-xs text-black">N/A</span>
             )}
           </div>
 
           <div className="flex-1">
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-black">
               {isTrigger ? "Trigger" : "Action"}
             </p>
             <p className="text-sm font-medium text-black">
@@ -125,7 +125,7 @@ export default function ZapNode({
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
           <div className="bg-white w-105 rounded-xl shadow-lg">
             <div className="flex items-center justify-between px-4 py-3 border-b">
-              <h2 className="font-semibold text-sm">
+              <h2 className="font-semibold text-sm text-black">
                 Select a {isTrigger ? "Trigger" : "Action"}
               </h2>
               <button onClick={() => setOpen(false)}>✕</button>
@@ -144,7 +144,7 @@ export default function ZapNode({
                     }}
                     className="flex items-center gap-3 p-3 rounded-md hover:bg-zinc-100 cursor-pointer"
                   >
-                    <div className="w-8 h-8 bg-zinc-200 rounded-md overflow-hidden">
+                    <div className="w-8 h-8 bg-zinc-200 rounded-md overflow-hidden text-black">
                       {item.image && (
                         <img
                           src={item.image}
@@ -152,7 +152,7 @@ export default function ZapNode({
                         />
                       )}
                     </div>
-                    <span className="text-sm font-medium">{item.name}</span>
+                    <span className="text-sm font-medium text-black">{item.name}</span>
                   </div>
                 ))}
             </div>

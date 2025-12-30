@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Props = {
@@ -7,13 +8,15 @@ type Props = {
 };
 
 export default function ZapHeader({ onUndo, canUndo, onPublish }: Props) {
+  const router = useRouter()
   const [publishing, setPublishing] = useState(false);
 
   const handlePublish = async () => {
     setPublishing(true);
     try {
       await onPublish();
-      alert("Zap published successfully ");
+      router.push("/currentZap")
+
     } catch {
       alert("Failed to publish zap");
     } finally {
