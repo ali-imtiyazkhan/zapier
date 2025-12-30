@@ -8,7 +8,7 @@ const Appbar = () => {
 
   const router = useRouter()
   return (
-    <div className='flex border-b items-center justify-between  text-black bg-zinc-100'>
+    <div className='flex border-b items-center justify-between  bg-[#2f2a26] text-white'>
 
       <div>
         <div>

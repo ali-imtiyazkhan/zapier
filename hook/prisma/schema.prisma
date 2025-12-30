@@ -6,72 +6,63 @@ datasource db {
   provider = "postgresql"
 }
 
-
 model User {
   id       Int    @id @default(autoincrement())
   name     String
   email    String @unique
   password String
-
   zaps     Zap[]
 }
 
 model Zap {
-  id String @id @default(uuid())
-
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  trigger Trigger?
+  id      String   @id @default(uuid())
+  userId  Int
   actions Action[]
+  trigger Trigger?
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   zapRuns ZapRun[]
 }
 
 model Trigger {
-  id String @id @default(uuid())
-
-  zapId              String @unique
+  id                 String           @id @default(uuid())
+  zapId              String           @unique
   availableTriggerId String
-
-  zap                Zap              @relation(fields: [zapId], references: [id], onDelete: Cascade)
   availableTrigger   AvailableTrigger @relation(fields: [availableTriggerId], references: [id])
-  
+  zap                Zap              @relation(fields: [zapId], references: [id], onDelete: Cascade)
 }
 
 model AvailableTrigger {
-  id   String @id @default(uuid())
-  name String
-
+  id       String    @id @default(uuid())
+  name     String
+  image    String?
   triggers Trigger[]
 }
 
 model Action {
-  id String @id @default(uuid())
-
+  id                String          @id @default(uuid())
   zapId             String
   availableActionId String
   order             Int
-
-  zap               Zap             @relation(fields: [zapId], references: [id], onDelete: Cascade)
+  sortingOrder      Int             @default(0)
   availableAction   AvailableAction @relation(fields: [availableActionId], references: [id])
-  sortingOrder        Int   @default(0)
+  zap               Zap             @relation(fields: [zapId], references: [id], onDelete: Cascade)
+
   @@unique([zapId, order])
 }
 
 model AvailableAction {
-  id   String @id @default(uuid())
-  name String
-
+  id      String   @id @default(uuid())
+  name    String
+  image   String? 
   actions Action[]
 }
 
 model ZapRun {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   zapId     String
+  createdAt DateTime      @default(now())
   metadata  Json
-  createdAt DateTime @default(now())
-
-  zap       Zap @relation(fields: [zapId], references: [id], onDelete: Cascade)
+  zap       Zap           @relation(fields: [zapId], references: [id], onDelete: Cascade)
   outbox    ZapRunOutbox?
 }
 
@@ -79,6 +70,5 @@ model ZapRunOutbox {
   id        String  @id @default(uuid())
   zapRunId  String  @unique
   processed Boolean @default(false)
-
-  zapRun ZapRun @relation(fields: [zapRunId], references: [id], onDelete: Cascade)
+  zapRun    ZapRun  @relation(fields: [zapRunId], references: [id], onDelete: Cascade)
 }

@@ -52,7 +52,6 @@ const Page = () => {
     <div className="min-h-screen w-full bg-[#fffdf8] flex items-center justify-center px-4">
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
 
-        {/* LEFT */}
         <div>
           <h1 className="text-4xl md:text-5xl font-bold text-black leading-tight">
             Join millions worldwide who automate their work using Zapier
@@ -70,7 +69,6 @@ const Page = () => {
           </ul>
         </div>
 
-        {/* RIGHT FORM */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-semibold text-black">
             Get started free
