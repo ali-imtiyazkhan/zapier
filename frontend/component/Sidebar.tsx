@@ -1,9 +1,14 @@
+import { useRouter } from "next/navigation";
+
 const Sidebar = () => {
+    const router = useRouter()
     return (
         <aside className="w-64 border-r bg-[#fffdf8] p-4 flex flex-col justify-between">
 
             <div>
-                <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-medium mb-6">
+                <button onClick={() => {
+                    router.push("/CreateZap")
+                }} className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-medium mb-6 cursor-pointer">
                     + Create
                 </button>
 

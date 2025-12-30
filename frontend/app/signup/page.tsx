@@ -41,11 +41,9 @@ const Page = () => {
       router.push("/DashBoard")
 
 
-    } catch (error: any) {
-      console.error(
-        "Signup failed:",
-        error.response?.data || error.message
-      );
+    } catch (err: any) {
+      console.log(err);
+      console.log("somthing happend ");
     }
   };
 

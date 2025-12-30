@@ -1,15 +1,14 @@
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const ZapsPage = () => {
+    const router = useRouter();
     return (
         <main className="flex-1 p-8 overflow-y-auto">
 
 
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-semibold">Zaps</h1>
-                <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg">
-                    + Create
-                </button>
             </div>
 
             <div className="flex gap-4 mb-10">
@@ -32,7 +31,9 @@ const ZapsPage = () => {
                         Zapier integrates instantly with over 7,000 apps.
                     </p>
 
-                    <button className="mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg">
+                    <button onClick={() => {
+                        router.push("/CreateZap")
+                    }} className="mt-4 bg-indigo-600 text-white px-5 py-2 rounded-lg cursor-pointer">
                         + Create Zap
                     </button>
                 </div>
