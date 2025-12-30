@@ -1,40 +1,54 @@
+import { useState } from "react";
+
 type Props = {
-    onUndo: () => void;
-    canUndo: boolean;
+  onUndo: () => void;
+  canUndo: boolean;
+  onPublish: () => Promise<void>;
 };
 
-export default function ZapHeader({ onUndo, canUndo }: Props) {
-    return (
-        <header className="h-14 bg-[#2f2a26] text-white flex items-center justify-between px-4">
-            <div className="font-bold text-sm">Zaps</div>
+export default function ZapHeader({ onUndo, canUndo, onPublish }: Props) {
+  const [publishing, setPublishing] = useState(false);
 
-            <div className="flex items-center gap-2 text-sm">
-                <span>Untitled Zap</span>
-                <span className="px-2 py-0.5 rounded-full bg-zinc-600 text-xs">
-                    Draft
-                </span>
-            </div>
+  const handlePublish = async () => {
+    setPublishing(true);
+    try {
+      await onPublish();
+      alert("Zap published successfully ");
+    } catch {
+      alert("Failed to publish zap");
+    } finally {
+      setPublishing(false);
+    }
+  };
 
-            <div className="flex gap-2">
-                <button
-                    onClick={onUndo}
-                    disabled={!canUndo}
-                    className={`text-sm ${canUndo
-                            ? "text-zinc-300 hover:text-white"
-                            : "text-zinc-500 cursor-not-allowed"
-                        }`}
-                >
-                    Undo
-                </button>
+  return (
+    <header className="h-14 bg-[#2f2a26] text-white flex items-center justify-between px-4">
+      <div className="font-bold text-sm">Zaps</div>
 
-                <button className="text-sm text-zinc-300 hover:text-white">
-                    Test run
-                </button>
+      <div className="flex items-center gap-2 text-sm">
+        <span>Untitled Zap</span>
+        <span className="px-2 py-0.5 rounded-full bg-zinc-600 text-xs">Draft</span>
+      </div>
 
-                <button className="bg-orange-500 px-3 py-1.5 rounded-md text-sm">
-                    Publish
-                </button>
-            </div>
-        </header>
-    );
+      <div className="flex gap-2">
+        <button
+          onClick={onUndo}
+          disabled={!canUndo}
+          className={canUndo ? "text-zinc-300" : "text-zinc-500"}
+        >
+          Undo
+        </button>
+
+        <button className="text-zinc-300">Test run</button>
+
+        <button
+          onClick={handlePublish}
+          disabled={publishing}
+          className="bg-orange-500 px-3 py-1.5 rounded-md"
+        >
+          {publishing ? "Publishing..." : "Publish"}
+        </button>
+      </div>
+    </header>
+  );
 }

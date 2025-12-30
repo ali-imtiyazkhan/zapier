@@ -3,7 +3,6 @@
 import Appbar from "@/component/Appbar";
 import HeroSection from "@/component/Hero";
 import HeroVideo from "@/component/HeroVideo";
-import React from "react";
 
 const Page = () => {
   return (

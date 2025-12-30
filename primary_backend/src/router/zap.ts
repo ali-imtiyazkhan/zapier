@@ -10,7 +10,7 @@ const router = Router();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 10,
+  max: 3,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
 });
@@ -82,7 +82,7 @@ router.post("/zapCreate", authMiddleware, async (req, res) => {
 });
 
 router.get("/zap", authMiddleware, async (req, res) => {
-    // @ts-ignore
+  // @ts-ignore
   const userId = req.userId;
 
   try {
@@ -119,9 +119,8 @@ router.get("/zap", authMiddleware, async (req, res) => {
   }
 });
 
-
 router.get("/:zapId", authMiddleware, async (req, res) => {
-    // @ts-ignore
+  // @ts-ignore
   const userId = req.userId;
   const zapId = req.params.zapId;
 
@@ -166,6 +165,4 @@ router.get("/:zapId", authMiddleware, async (req, res) => {
   }
 });
 
-
-
-export const ZapRouter = router
+export const ZapRouter = router;
