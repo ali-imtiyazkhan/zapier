@@ -6,18 +6,18 @@ import { useParams, useRouter } from "next/navigation";
 
 type Zap = {
   id: string;
-  trigger: {
-    availableTrigger: {
+  trigger?: {
+    availableTrigger?: {
       name: string;
-      image: string;
+      image?: string | null;
     };
   } | null;
   actions: {
     id: string;
     order: number;
-    availableAction: {
+    availableAction?: {
       name: string;
-      image: string;
+      image?: string | null;
     };
   }[];
 };
@@ -84,13 +84,18 @@ const ZapPage = () => {
       <div className="bg-white border rounded-xl p-5 mb-6">
         <p className="text-xs text-zinc-500 mb-2">Trigger</p>
 
-        {zap.trigger ? (
+        {zap.trigger?.availableTrigger ? (
           <div className="flex items-center gap-3">
-            <img
-              src={zap.trigger.availableTrigger.image}
-              alt="trigger"
-              className="h-8 w-8"
-            />
+            {zap.trigger.availableTrigger.image ? (
+              <img
+                src={zap.trigger.availableTrigger.image}
+                alt="trigger"
+                className="h-8 w-8"
+              />
+            ) : (
+              <span className="text-xs text-zinc-400">N/A</span>
+            )}
+
             <span className="font-medium text-black">
               {zap.trigger.availableTrigger.name}
             </span>
@@ -102,6 +107,7 @@ const ZapPage = () => {
         )}
       </div>
 
+      {/* Actions */}
       <div className="bg-white border rounded-xl p-5">
         <p className="text-xs text-zinc-500 mb-4">Actions</p>
 
@@ -119,13 +125,18 @@ const ZapPage = () => {
                 key={action.id}
                 className="flex items-center gap-3 border rounded-lg p-3"
               >
-                <img
-                  src={action.availableAction.image}
-                  alt="action"
-                  className="h-6 w-6"
-                />
+                {action.availableAction?.image ? (
+                  <img
+                    src={action.availableAction.image}
+                    alt="action"
+                    className="h-6 w-6"
+                  />
+                ) : (
+                  <span className="text-xs text-zinc-400">N/A</span>
+                )}
+
                 <span className="text-black text-sm">
-                  {action.availableAction.name}
+                  {action.availableAction?.name ?? "Unknown action"}
                 </span>
               </div>
             ))}

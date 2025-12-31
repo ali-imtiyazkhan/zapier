@@ -10,7 +10,7 @@ const pool = new Pool({
     connectionTimeoutMillis: 10_000,
 });
 const adapter = new PrismaPg(pool);
-const client = new PrismaClient({
+const prisma = new PrismaClient({
     adapter,
     transactionOptions: {
         maxWait: 10_000,
@@ -18,16 +18,25 @@ const client = new PrismaClient({
     },
 });
 const app = express();
-app.use(express.json());
-app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
-    const { userId, zapId } = req.params;
-    const data = req.body;
+app.use(express.json({ limit: "2mb" }));
+app.post("/api/v1/webhook/:zapId", async (req, res) => {
+    const { zapId } = req.params;
+    const metadata = req.body;
     try {
-        await client.$transaction(async (tx) => {
+        const zap = await prisma.zap.findUnique({
+            where: { id: zapId },
+            select: { id: true },
+        });
+        if (!zap) {
+            return res.status(404).json({
+                error: "Invalid zapId",
+            });
+        }
+        await prisma.$transaction(async (tx) => {
             const run = await tx.zapRun.create({
                 data: {
                     zapId,
-                    metadata: data,
+                    metadata,
                 },
             });
             await tx.zapRunOutbox.create({
@@ -39,10 +48,13 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
         res.status(200).json({ success: true });
     }
     catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to process hook" });
+        console.error("HOOK ERROR:", err);
+        res.status(500).json({
+            error: "Failed to process webhook",
+        });
     }
 });
-app.listen(3000, () => {
-    console.log("your server is running on port 3000");
+const PORT = process.env.HOOKS_PORT || 3002;
+app.listen(PORT, () => {
+    console.log(`Hooks service running on port ${PORT}`);
 });

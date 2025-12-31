@@ -10,46 +10,38 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 import { Kafka } from "kafkajs";
 const kafka = new Kafka({
-    clientId: "zapier-app",
+    clientId: "zap-processor",
     brokers: ["localhost:9092"],
 });
-const TOPIC_NAME = "zap-events";
+const TOPIC = "zap-runs";
+async function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+}
 async function main() {
     const producer = kafka.producer();
     await producer.connect();
-    console.log(" Kafka Producer connected");
+    console.log("Processor connected");
     while (true) {
-        const pendingRows = await prisma.zapRunOutbox.findMany({
+        const rows = await prisma.zapRunOutbox.findMany({
             where: { processed: false },
             take: 10,
         });
-        if (pendingRows.length === 0) {
+        if (rows.length === 0) {
             await sleep(2000);
             continue;
         }
-        const messages = pendingRows.map((row) => ({
-            key: row.zapRunId.toString(),
-            value: JSON.stringify({
-                zapRunId: row.zapRunId,
-            }),
-        }));
         await producer.send({
-            topic: TOPIC_NAME,
-            messages,
+            topic: TOPIC,
+            messages: rows.map((r) => ({
+                key: r.zapRunId,
+                value: JSON.stringify({ zapRunId: r.zapRunId }),
+            })),
         });
         await prisma.zapRunOutbox.updateMany({
-            where: {
-                id: { in: pendingRows.map((r) => r.id) },
-            },
+            where: { id: { in: rows.map((r) => r.id) } },
             data: { processed: true },
         });
-        console.log(` Published ${pendingRows.length} events`);
+        console.log(`Published ${rows.length} events`);
     }
 }
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-main().catch((err) => {
-    console.error(" Error:", err);
-    process.exit(1);
-});
+main().catch(console.error);

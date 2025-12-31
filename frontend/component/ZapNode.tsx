@@ -1,5 +1,6 @@
+"use client";
+
 import axios from "axios";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export type Item = {
@@ -15,6 +16,7 @@ type Props = {
   buttonLabel: string;
   selectedItem?: Item | null;
   onSelect: (type: "trigger" | "action", item: Item) => void;
+  onConfigChange?: (actionId: string, config: any) => void;
 };
 
 export default function ZapNode({
@@ -24,15 +26,18 @@ export default function ZapNode({
   buttonLabel,
   selectedItem,
   onSelect,
+  onConfigChange,
 }: Props) {
   const isTrigger = type === "trigger";
 
-
-  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
+
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  const [config, setConfig] = useState<Record<string, any>>({});
 
   const handleButton = async () => {
     setOpen(true);
@@ -46,115 +51,160 @@ export default function ZapNode({
           ? "http://localhost:3000/api/v1/trigger/available"
           : "http://localhost:3000/api/v1/action/available";
 
-      const response = await axios.get(url, { withCredentials: true });
-
+      const res = await axios.get(url);
       setItems(
         type === "trigger"
-          ? response.data.availableTriggers
-          : response.data.availableActions
+          ? res.data.availableTriggers
+          : res.data.availableActions
       );
-
       setLoaded(true);
     } catch (err) {
-      console.error("Failed to load items:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  const saveConfig = () => {
+    if (selectedItem && onConfigChange) {
+      onConfigChange(selectedItem.id, config);
+    }
+    setConfigOpen(false);
+  };
+
   return (
     <>
-      {/* NODE */}
       {!selectedItem ? (
-        <div className="w-full bg-white border-2 border-dashed border-zinc-300 rounded-xl p-4 flex flex-col gap-3">
-          <span
-            className={`w-fit text-xs font-semibold px-2 py-1 rounded-md
-              ${isTrigger
-                ? "bg-blue-100 text-blue-600"
-                : "bg-zinc-100 text-zinc-700"
-              }`}
-          >
-            {isTrigger ? "Trigger" : "Action"}
-          </span>
-
-          <div className="text-sm text-zinc-700">
+        <div className="w-full bg-white border-2 border-dashed rounded-xl p-4">
+          <div className="text-sm text-black">
             <strong>{step}.</strong> {text}
           </div>
-
           <button
             onClick={handleButton}
-            className="mt-2 w-fit text-sm px-3 py-1.5 rounded-md
-                       border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+            className="mt-3 text-sm border px-3 py-1.5 rounded-md text-black"
           >
             + {buttonLabel}
           </button>
         </div>
       ) : (
-        <div className="w-full bg-white border border-zinc-300 rounded-xl p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-200 flex items-center justify-center">
-            {selectedItem.image ? (
-              <img
-                src={selectedItem.image}
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <span className="text-xs text-black">N/A</span>
-            )}
+        <div className="w-full bg-white border rounded-xl p-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <img
+              src={selectedItem.image}
+              className="h-8 w-8"
+              alt=""
+            />
+            <span className="text-black">{selectedItem.name}</span>
           </div>
 
-          <div className="flex-1">
-            <p className="text-xs text-black">
-              {isTrigger ? "Trigger" : "Action"}
-            </p>
-            <p className="text-sm font-medium text-black">
-              {selectedItem.name}
-            </p>
-          </div>
-
-          <button
-            onClick={handleButton}
-            className="text-xs px-2 py-1 rounded-md border border-zinc-300 text-zinc-600"
-          >
-            Change
-          </button>
+          {!isTrigger && (
+            <button
+              onClick={() => setConfigOpen(true)}
+              className="text-xs border px-2 py-1 rounded"
+            >
+              Configure
+            </button>
+          )}
         </div>
       )}
 
-      {/* MODAL */}
       {open && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
-          <div className="bg-white w-105 rounded-xl shadow-lg">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <h2 className="font-semibold text-sm text-black">
-                Select a {isTrigger ? "Trigger" : "Action"}
-              </h2>
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white w-96 rounded-xl">
+            <div className="p-3 border-b flex justify-between text-black">
+              <span>Select {type}</span>
               <button onClick={() => setOpen(false)}>✕</button>
             </div>
 
-            <div className="max-h-87.5 overflow-y-auto p-2">
-              {loading && <p className="text-center py-6">Loading...</p>}
+            <div className="p-2">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => {
+                    onSelect(type, item);
+                    setOpen(false);
 
-              {!loading &&
-                items.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      onSelect(type, item);
-                      setOpen(false);
-                    }}
-                    className="flex items-center gap-3 p-3 rounded-md hover:bg-zinc-100 cursor-pointer"
-                  >
-                    <div className="w-8 h-8 bg-zinc-200 rounded-md overflow-hidden text-black">
-                      {item.image && (
-                        <img
-                          src={item.image}
-                          className="w-full h-full object-contain"
-                        />
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-black">{item.name}</span>
-                  </div>
-                ))}
+                    if (!isTrigger) {
+                      setConfig({});
+                      setConfigOpen(true);
+                    }
+                  }}
+                  className="flex items-center gap-3 p-2 text-black hover:bg-zinc-100 cursor-pointer"
+                >
+                  <img src={item.image} className="h-6 w-6" />
+                  <span>{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {configOpen && selectedItem && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white w-105 rounded-xl p-4">
+            <h2 className="font-semibold mb-3 text-black">
+              Configure {selectedItem.name}
+            </h2>
+
+            {selectedItem.name === "Send Email" && (
+              <div className="space-y-2 text-black">
+                <input
+                  placeholder="To"
+                  className="w-full border px-2 py-1 text-black placeholder:text-zinc-500"
+                  onChange={(e) =>
+                    setConfig({ ...config, to: e.target.value })
+                  }
+                />
+                <input
+                  placeholder="Subject"
+                  className="w-full border px-2 py-1 text-black placeholder:text-zinc-500"
+                  onChange={(e) =>
+                    setConfig({ ...config, subject: e.target.value })
+                  }
+                />
+                <textarea
+                  placeholder="Body"
+                  className="w-full border px-2 py-1 text-black placeholder:text-zinc-500"
+                  onChange={(e) =>
+                    setConfig({ ...config, body: e.target.value })
+                  }
+                />
+              </div>
+            )}
+
+            {selectedItem.name === "sms-send" && (
+              <div className="space-y-2 text-black">
+                <input
+                  placeholder="To"
+                  className="w-full border px-2 py-1 text-black placeholder:text-zinc-500"
+                  onChange={(e) =>
+                    setConfig({ ...config, to: e.target.value })
+                  }
+                />
+                <textarea
+                  placeholder="Message"
+                  className="w-full border px-2 py-1 text-black placeholder:text-zinc-500"
+                  onChange={(e) =>
+                    setConfig({ ...config, message: e.target.value })
+                  }
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setConfigOpen(false)}
+                className="text-sm px-3 py-1 border rounded text-black"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveConfig}
+                className="text-sm px-3 py-1 bg-orange-500 text-white rounded"
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>

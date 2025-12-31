@@ -28,46 +28,39 @@ router.post("/zapCreate", authMiddleware, async (req, res) => {
             errors: parsed.error.format(),
         });
     }
-    try {
-        // @ts-ignore
-        const userId = req.userId;
-        const zap = await client.zap.create({
-            data: {
-                userId,
-                // 🔹 Create trigger
-                trigger: {
-                    create: {
-                        availableTriggerId: parsed.data.availableTriggerId,
-                    },
-                },
-                // 🔹 Create ordered actions
-                actions: {
-                    create: parsed.data.action.map((action, index) => ({
-                        availableActionId: action.availableActionId,
-                        // REQUIRED by Prisma schema
-                        order: index,
-                        sortingOrder: index,
-                    })),
+    // @ts-ignore
+    const userId = req.userId;
+    const zap = await client.zap.create({
+        data: {
+            userId,
+            trigger: {
+                create: {
+                    availableTriggerId: parsed.data.availableTriggerId,
                 },
             },
-            include: {
-                trigger: true,
-                actions: {
-                    orderBy: { order: "asc" },
-                },
+            actions: {
+                create: parsed.data.action.map((action, index) => ({
+                    availableActionId: action.availableActionId,
+                    order: index,
+                    sortingOrder: index,
+                    config: action.config ?? null,
+                })),
             },
-        });
-        return res.status(201).json({
-            message: "Zap created successfully",
-            zap,
-        });
-    }
-    catch (err) {
-        console.error(err);
-        return res.status(500).json({
-            message: "Failed to create zap",
-        });
-    }
+        },
+        include: {
+            trigger: {
+                include: { availableTrigger: true },
+            },
+            actions: {
+                orderBy: { order: "asc" },
+                include: { availableAction: true },
+            },
+        },
+    });
+    return res.status(201).json({
+        message: "Zap created successfully",
+        zap,
+    });
 });
 router.get("/zap", authMiddleware, async (req, res) => {
     // @ts-ignore

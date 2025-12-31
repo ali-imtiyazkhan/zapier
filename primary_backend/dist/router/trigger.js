@@ -60,4 +60,47 @@ router.post("/addTrigger", authMiddleware, async (req, res) => {
         });
     }
 });
+router.post("/:zapId/trigger", authMiddleware, async (req, res) => {
+    try {
+        const { zapId } = req.params;
+        const { availableTriggerId } = req.body;
+        if (!availableTriggerId) {
+            return res.status(400).json({
+                message: "availableTriggerId is required",
+            });
+        }
+        const zap = await client.zap.findUnique({
+            where: { id: zapId },
+        });
+        if (!zap) {
+            return res.status(404).json({
+                message: "Zap not found",
+            });
+        }
+        const trigger = await client.trigger.create({
+            data: {
+                zapId,
+                availableTriggerId,
+            },
+            include: {
+                availableTrigger: true,
+            },
+        });
+        return res.status(201).json({
+            message: "Trigger added successfully",
+            trigger,
+        });
+    }
+    catch (error) {
+        console.error("ADD TRIGGER ERROR:", error);
+        if (error.code === "P2002") {
+            return res.status(409).json({
+                message: "Zap already has a trigger",
+            });
+        }
+        return res.status(500).json({
+            message: "Failed to add trigger",
+        });
+    }
+});
 export const triggerRouter = router;

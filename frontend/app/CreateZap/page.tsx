@@ -7,7 +7,6 @@ import ZapNode, { Item } from "@/component/ZapNode";
 import Connector from "@/component/Connector";
 import ZapHeader from "@/component/ZapHeader";
 
-
 type Step = {
   id: number;
   type: "trigger" | "action";
@@ -15,7 +14,6 @@ type Step = {
 };
 
 export default function ZapPage() {
-
   const [steps, setSteps] = useState<Step[]>([
     { id: 1, type: "trigger", text: "Select the event that starts your Zap" },
   ]);
@@ -24,6 +22,12 @@ export default function ZapPage() {
 
   const [selectedTrigger, setSelectedTrigger] = useState<Item | null>(null);
   const [selectedActions, setSelectedActions] = useState<Item[]>([]);
+
+  /**
+   * 🔹 NEW: store config per action (key = actionId)
+   * UI stays unchanged
+   */
+  const [actionConfigs, setActionConfigs] = useState<Record<string, any>>({});
 
   const addAction = () => {
     setHistory((h) => [...h, steps]);
@@ -48,7 +52,21 @@ export default function ZapPage() {
       setSelectedTrigger(item);
     } else {
       setSelectedActions((prev) => [...prev, item]);
+
+
+      setActionConfigs((prev) => ({
+        ...prev,
+        [item.id]: {},
+      }));
     }
+  };
+
+
+  const updateActionConfig = (actionId: string, config: any) => {
+    setActionConfigs((prev) => ({
+      ...prev,
+      [actionId]: config,
+    }));
   };
 
   const handlePublish = async () => {
@@ -66,6 +84,7 @@ export default function ZapPage() {
       availableTriggerId: selectedTrigger.id,
       action: selectedActions.map((action) => ({
         availableActionId: action.id,
+        config: actionConfigs[action.id] ?? {},
       })),
     };
 
@@ -80,8 +99,6 @@ export default function ZapPage() {
         },
       }
     );
-
-
   };
 
   return (
@@ -111,6 +128,8 @@ export default function ZapPage() {
                     : selectedActions[index - 1] ?? null
                 }
                 onSelect={handleSelect}
+
+                onConfigChange={updateActionConfig}
               />
 
               <Connector

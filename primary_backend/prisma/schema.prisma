@@ -44,6 +44,7 @@ model Action {
   availableActionId String
   order             Int
   sortingOrder      Int             @default(0)
+  config            Json?
   availableAction   AvailableAction @relation(fields: [availableActionId], references: [id])
   zap               Zap             @relation(fields: [zapId], references: [id], onDelete: Cascade)
 
@@ -53,7 +54,7 @@ model Action {
 model AvailableAction {
   id      String   @id @default(uuid())
   name    String
-  image   String? 
+  image   String?
   actions Action[]
 }
 
@@ -62,6 +63,7 @@ model ZapRun {
   zapId     String
   createdAt DateTime      @default(now())
   metadata  Json
+  executed  Boolean       @default(false)
   zap       Zap           @relation(fields: [zapId], references: [id], onDelete: Cascade)
   outbox    ZapRunOutbox?
 }
