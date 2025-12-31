@@ -79,7 +79,7 @@ async function startWorker() {
   await consumer.connect();
   await consumer.subscribe({
     topic: TOPIC,
-    fromBeginning: true,
+    fromBeginning: false,
   });
 
   console.log(" Worker connected");
