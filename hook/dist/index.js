@@ -3,6 +3,7 @@ import express from "express";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
+import cors from "cors";
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     max: 10,
@@ -19,6 +20,10 @@ const prisma = new PrismaClient({
 });
 const app = express();
 app.use(express.json({ limit: "2mb" }));
+app.use(cors({
+    origin: "http://localhost:3001",
+    credentials: true,
+}));
 app.post("/api/v1/webhook/:zapId", async (req, res) => {
     const { zapId } = req.params;
     const metadata = req.body;

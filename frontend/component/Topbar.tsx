@@ -12,7 +12,6 @@ const Topbar = () => {
 
       <div className="flex items-center gap-4 text-sm">
         <button className="text-gray-700 hover:text-black">Help</button>
-        <button className="text-gray-700 hover:text-black">Explore apps</button>
         <button className="border px-3 py-1 rounded-md">Contact Sales</button>
         <button onClick={() => {
           localStorage.clear();

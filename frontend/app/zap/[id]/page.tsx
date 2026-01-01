@@ -29,6 +29,50 @@ const ZapPage = () => {
   const [zap, setZap] = useState<Zap | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [isRunning, setIsRunning] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
+
+  const handleZap = async () => {
+    setIsRunning(true);
+    setNotification({
+      type: "info",
+      message: "Zap is running...",
+    });
+
+    try {
+      await axios.post(
+        `http://localhost:3002/api/v1/webhook/${id}`,
+        {
+          action: "RUN_ZAP",
+          triggeredAt: new Date().toISOString(),
+          source: "manual",
+        },
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setNotification({
+        type: "success",
+        message: "✅ Zap delivered successfully!",
+      });
+    } catch (error) {
+      setNotification({
+        type: "error",
+        message: "❌ Failed to run Zap. Please try again.",
+      });
+    } finally {
+      setIsRunning(false);
+      setTimeout(() => setNotification(null), 3000);
+    }
+  };
+
   useEffect(() => {
     const fetchZap = async () => {
       try {
@@ -81,6 +125,23 @@ const ZapPage = () => {
         Zap Builder
       </h1>
 
+      {/* Notification */}
+      {notification && (
+        <div
+          className={`fixed top-6 right-6 z-50 rounded-lg px-4 py-3 text-sm font-medium shadow-lg
+            ${notification.type === "success"
+              ? "bg-green-500 text-white"
+              : notification.type === "error"
+                ? "bg-red-500 text-white"
+                : "bg-zinc-800 text-white"
+            }
+          `}
+        >
+          {notification.message}
+        </div>
+      )}
+
+      {/* Trigger */}
       <div className="bg-white border rounded-xl p-5 mb-6">
         <p className="text-xs text-zinc-500 mb-2">Trigger</p>
 
@@ -140,6 +201,28 @@ const ZapPage = () => {
                 </span>
               </div>
             ))}
+
+          {/* Run Zap Button */}
+          <button
+            onClick={handleZap}
+            disabled={isRunning}
+            className={`
+              mx-4 my-4
+              rounded-lg
+              px-6 py-2.5
+              text-sm font-semibold text-black
+              shadow-md
+              transition-all duration-200 ease-in-out
+              ${isRunning
+                ? "bg-amber-300 cursor-not-allowed"
+                : "bg-amber-500 hover:bg-amber-800 hover:shadow-lg hover:-translate-y-0.5"
+              }
+              active:translate-y-0 active:shadow-sm
+              focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2
+            `}
+          >
+            {isRunning ? "Running Zap..." : "⚡ Run Zap"}
+          </button>
         </div>
       </div>
     </div>
