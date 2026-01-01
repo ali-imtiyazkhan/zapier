@@ -22,16 +22,13 @@ const prisma = new PrismaClient({
 
 const app = express();
 
-
 app.use(express.json({ limit: "2mb" }));
-
 
 app.post("/api/v1/webhook/:zapId", async (req, res) => {
   const { zapId } = req.params;
   const metadata = req.body;
 
   try {
-  
     const zap = await prisma.zap.findUnique({
       where: { id: zapId },
       select: { id: true },
@@ -66,7 +63,6 @@ app.post("/api/v1/webhook/:zapId", async (req, res) => {
     });
   }
 });
-
 
 const PORT = process.env.HOOKS_PORT || 3002;
 

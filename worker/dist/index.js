@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import nodemailer from "nodemailer";
+import twilio from "twilio";
 /* ------------------ DATABASE ------------------ */
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -19,6 +20,9 @@ const kafka = new Kafka({
 const TOPIC = "zap-runs";
 const GROUP_ID = "zap-worker-group-v3";
 /* ------------------ HELPERS ------------------ */
+/**
+ * Resolves {{variable.path}} from metadata
+ */
 function resolve(template, data) {
     if (!template || typeof data !== "object" || data === null)
         return "";
@@ -29,6 +33,7 @@ function resolve(template, data) {
             .reduce((acc, key) => acc?.[key], data) ?? "");
     });
 }
+/* ------------------ EMAIL (NODEMAILER) ------------------ */
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
@@ -49,9 +54,19 @@ async function sendEmail(payload) {
     });
     console.log("📧 Email sent to:", payload.to);
 }
+/* ------------------ SMS (TWILIO) ------------------ */
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 async function sendSms(payload) {
-    console.log("📩 SMS:", payload);
+    if (!payload.to)
+        throw new Error("SMS recipient missing");
+    const res = await twilioClient.messages.create({
+        body: payload.message || "Zap notification",
+        from: process.env.TWILIO_PHONE,
+        to: payload.to,
+    });
+    console.log("📩 SMS sent:", res.sid);
 }
+/* ------------------ WORKER ------------------ */
 async function startWorker() {
     const consumer = kafka.consumer({ groupId: GROUP_ID });
     await consumer.connect();
@@ -59,14 +74,14 @@ async function startWorker() {
         topic: TOPIC,
         fromBeginning: false,
     });
-    console.log(" Worker connected");
+    console.log("⚙️ Worker connected");
     await consumer.run({
         autoCommit: false,
         eachMessage: async ({ topic, partition, message }) => {
             const raw = message.value?.toString();
             if (!raw)
                 return;
-            console.log(" Kafka message:", raw);
+            console.log("📨 Kafka message:", raw);
             const { zapRunId } = JSON.parse(raw);
             const zapRun = await prisma.zapRun.findUnique({
                 where: { id: zapRunId },
@@ -81,7 +96,6 @@ async function startWorker() {
                     },
                 },
             });
-            console.log(zapRun);
             if (!zapRun || zapRun.executed) {
                 await consumer.commitOffsets([
                     {
@@ -94,10 +108,11 @@ async function startWorker() {
             }
             try {
                 const metadata = zapRun.metadata;
-                console.log(" Metadata:", metadata);
+                console.log("🧩 Metadata:", metadata);
                 for (const action of zapRun.zap.actions) {
                     const config = (action.config ?? {});
-                    console.log(" Executing:", action.availableAction.name, config);
+                    console.log("▶ Executing:", action.availableAction.name, config);
+                    /* -------- EMAIL ACTION -------- */
                     if (action.availableAction.name === "Send Email") {
                         await sendEmail({
                             to: resolve(config.to, metadata),
@@ -105,6 +120,7 @@ async function startWorker() {
                             body: resolve(config.body, metadata),
                         });
                     }
+                    /* -------- SMS ACTION -------- */
                     if (action.availableAction.name === "sms-send") {
                         await sendSms({
                             to: resolve(config.to, metadata),
@@ -131,7 +147,8 @@ async function startWorker() {
         },
     });
 }
+/* ------------------ START ------------------ */
 startWorker().catch((err) => {
-    console.error(" Worker crashed:", err);
+    console.error("❌ Worker crashed:", err);
     process.exit(1);
 });

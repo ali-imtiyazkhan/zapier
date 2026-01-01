@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import nodemailer from "nodemailer";
+import twilio from "twilio";
 
 /* ------------------ DATABASE ------------------ */
 
@@ -27,6 +28,9 @@ const GROUP_ID = "zap-worker-group-v3";
 
 /* ------------------ HELPERS ------------------ */
 
+/**
+ * Resolves {{variable.path}} from metadata
+ */
 function resolve(template: string, data: unknown): string {
   if (!template || typeof data !== "object" || data === null) return "";
 
@@ -40,6 +44,7 @@ function resolve(template: string, data: unknown): string {
   });
 }
 
+/* ------------------ EMAIL (NODEMAILER) ------------------ */
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -68,10 +73,26 @@ async function sendEmail(payload: {
   console.log("📧 Email sent to:", payload.to);
 }
 
+/* ------------------ SMS (TWILIO) ------------------ */
+
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID!,
+  process.env.TWILIO_AUTH_TOKEN!
+);
+
 async function sendSms(payload: { to: string; message: string }) {
-  console.log("📩 SMS:", payload);
+  if (!payload.to) throw new Error("SMS recipient missing");
+
+  const res = await twilioClient.messages.create({
+    body: payload.message || "Zap notification",
+    from: process.env.TWILIO_PHONE,
+    to: payload.to,
+  });
+
+  console.log("📩 SMS sent:", res.sid);
 }
 
+/* ------------------ WORKER ------------------ */
 
 async function startWorker() {
   const consumer = kafka.consumer({ groupId: GROUP_ID });
@@ -82,7 +103,7 @@ async function startWorker() {
     fromBeginning: false,
   });
 
-  console.log(" Worker connected");
+  console.log("⚙️ Worker connected");
 
   await consumer.run({
     autoCommit: false,
@@ -91,7 +112,7 @@ async function startWorker() {
       const raw = message.value?.toString();
       if (!raw) return;
 
-      console.log(" Kafka message:", raw);
+      console.log("📨 Kafka message:", raw);
 
       const { zapRunId } = JSON.parse(raw);
 
@@ -108,7 +129,6 @@ async function startWorker() {
           },
         },
       });
-      console.log(zapRun);
 
       if (!zapRun || zapRun.executed) {
         await consumer.commitOffsets([
@@ -123,13 +143,14 @@ async function startWorker() {
 
       try {
         const metadata = zapRun.metadata;
-        console.log(" Metadata:", metadata);
+        console.log("🧩 Metadata:", metadata);
 
         for (const action of zapRun.zap.actions) {
           const config = (action.config ?? {}) as Record<string, any>;
 
-          console.log(" Executing:", action.availableAction.name, config);
+          console.log("▶ Executing:", action.availableAction.name, config);
 
+          /* -------- EMAIL ACTION -------- */
           if (action.availableAction.name === "Send Email") {
             await sendEmail({
               to: resolve(config.to, metadata),
@@ -138,6 +159,7 @@ async function startWorker() {
             });
           }
 
+          /* -------- SMS ACTION -------- */
           if (action.availableAction.name === "sms-send") {
             await sendSms({
               to: resolve(config.to, metadata),
@@ -167,7 +189,9 @@ async function startWorker() {
   });
 }
 
+/* ------------------ START ------------------ */
+
 startWorker().catch((err) => {
-  console.error(" Worker crashed:", err);
+  console.error("❌ Worker crashed:", err);
   process.exit(1);
 });
