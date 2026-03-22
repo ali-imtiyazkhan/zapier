@@ -42,20 +42,25 @@ async function main() {
       continue;
     }
 
-    await producer.send({
-      topic: TOPIC,
-      messages: rows.map((r) => ({
-        key: r.zapRunId,
-        value: JSON.stringify({ zapRunId: r.zapRunId }),
-      })),
-    });
+    try {
+      await producer.send({
+        topic: TOPIC,
+        messages: rows.map((r) => ({
+          key: r.zapRunId,
+          value: JSON.stringify({ zapRunId: r.zapRunId }),
+        })),
+      });
 
-    await prisma.zapRunOutbox.updateMany({
-      where: { id: { in: rows.map((r) => r.id) } },
-      data: { processed: true },
-    });
+      await prisma.zapRunOutbox.deleteMany({
+        where: { id: { in: rows.map((r) => r.id) } },
+      });
 
-    console.log(`Published ${rows.length} events`);
+      console.log(`Published and cleared ${rows.length} events`);
+    } catch (err) {
+      console.error("Failed to publish messages:", err);
+      // Wait a bit before retrying
+      await sleep(5000);
+    }
   }
 }
 

@@ -145,13 +145,15 @@ async function startWorker() {
         const metadata = zapRun.metadata;
         console.log("🧩 Metadata:", metadata);
 
+        // Execute actions in sequence
         for (const action of zapRun.zap.actions) {
           const config = (action.config ?? {}) as Record<string, any>;
+          const actionName = action.availableAction.name.toLowerCase();
 
-          console.log("▶ Executing:", action.availableAction.name, config);
+          console.log(`▶ Executing: ${action.availableAction.name}`, config);
 
           /* -------- EMAIL ACTION -------- */
-          if (action.availableAction.name === "Send Email") {
+          if (actionName.includes("email")) {
             await sendEmail({
               to: resolve(config.to, metadata),
               subject: resolve(config.subject, metadata),
@@ -160,7 +162,7 @@ async function startWorker() {
           }
 
           /* -------- SMS ACTION -------- */
-          if (action.availableAction.name === "sms-send") {
+          if (actionName.includes("sms")) {
             await sendSms({
               to: resolve(config.to, metadata),
               message: resolve(config.message, metadata),
@@ -168,8 +170,10 @@ async function startWorker() {
           }
         }
 
+        /* ------------------ UPDATE STATUS ------------------ */
+
         await prisma.zapRun.update({
-          where: { id: zapRunId },
+          where: { id: zapRunId, executed: false },
           data: { executed: true },
         });
 
@@ -181,9 +185,11 @@ async function startWorker() {
           },
         ]);
 
-        console.log(` ZapRun ${zapRunId} executed`);
+        console.log(`✅ ZapRun ${zapRunId} executed successfully`);
       } catch (err) {
-        console.error(" Worker error:", err);
+        console.error("❌ Worker execution error:", err);
+        // Don't commit offset if it's a transient error? 
+        // For now, we'll log it. In production, you'd want a dead-letter queue.
       }
     },
   });
