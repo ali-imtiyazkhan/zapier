@@ -42,7 +42,6 @@ router.post("/zapCreate", authMiddleware, async (req, res) => {
                 create: parsed.data.action.map((action, index) => ({
                     availableActionId: action.availableActionId,
                     order: index,
-                    sortingOrder: index,
                     config: action.config ?? null,
                 })),
             },

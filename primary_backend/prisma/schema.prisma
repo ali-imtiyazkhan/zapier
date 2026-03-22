@@ -43,7 +43,6 @@ model Action {
   zapId             String
   availableActionId String
   order             Int
-  sortingOrder      Int             @default(0)
   config            Json?
   availableAction   AvailableAction @relation(fields: [availableActionId], references: [id])
   zap               Zap             @relation(fields: [zapId], references: [id], onDelete: Cascade)
